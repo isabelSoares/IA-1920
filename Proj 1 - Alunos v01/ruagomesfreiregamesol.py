@@ -52,7 +52,6 @@ class Tree:
     node = self.toExpand[0]
 
     while (node.antecessor != None):
-      print(node.antecessor.number)
       result = [[[node.transport], [node.number]]] + result
       node = node.antecessor
 
