@@ -2,145 +2,198 @@ import math
 import pickle
 import time
 
-class Node:
-  def __init__(self, number, transport, cost, depth, goal, antecessor, auxheur, tickets):
-    self.number = number
-    self.transport = transport
+class Detective:
+
+  def __init__(self, init):
+    self.states = [init]
+    self.toExpand = [init]
+    self.stateGoal = None
+
+  def expandState(self, nodesBFS, model):
+    stateToExpand = self.toExpand.pop(0)
+
+    tmp = [[]]
+    for x in range(0, len(stateToExpand.nodes)):
+      subtmp = []
+      possibilities = model[stateToExpand.nodes[x].pos]
+      #print("Possibilities: " + str(possibilities))
+      for tmpValue in tmp:
+        for possibility in possibilities:
+          #print("tmpValue: " + str(tmpValue))
+          #print("possibilty: " + str(possibility))
+          newValue = tmpValue + ([possibility])
+          #print("newValue: " + str(newValue))
+          subtmp.append(newValue)
+      
+      tmp = subtmp.copy()
+
+    #print(str(tmp))
+
+    possibilitiesStates = tmp
+    for possibility in possibilitiesStates:
+      tmpNodes = []
+      tmpTickets = stateToExpand.ticketsLeft.copy()
+      tmpPath = stateToExpand.pathTo.copy()
+      tmpPath.append([[], []])
+
+      # Number of detectives
+      for part in possibility:
+        tmpNode = nodesBFS[part[1]]
+        if tmpNode not in tmpNodes:
+          tmpNodes.append(tmpNode)
+          tmpPath[-1][0].append(part[0])
+          tmpPath[-1][1].append(part[1])
+          tmpTickets[part[0]] -= 1
+      
+      if len(tmpNodes) == len(stateToExpand.nodes):
+        validTickets = True
+        for ticket in tmpTickets:
+          if ticket < 0:
+            validTickets = False
+        
+        # print(str(tmpPath))
+        if validTickets:
+          tmpState = State(tmpNodes, stateToExpand.depth + 1, stateToExpand.soFarCost + 1, tmpTickets)
+          tmpState.pathTo = tmpPath.copy()
+          self.states.append(tmpState)
+          self.toExpand.append(tmpState)
+
+    self.toExpand.sort()
+    # print(self.toExpand)
+
+  def checkSolved(self, goals):
+    valid = True
+    possibleSolution = self.toExpand[0]
+    for x in range(0, len(goals)):
+      #print("Goal x: " + str(goals[x]))
+      #print("Actual x: " + str(possibleSolution.nodes[x].pos))
+      #print("Actual Cost: " + str(possibleSolution.orderFactor))
+      if goals[x] != possibleSolution.nodes[x].pos:
+        valid = False
+
+    #print(str(valid))
+    return valid
+
+class State:
+
+  def __init__(self, nodes, depth, cost, tickets):
+    self.nodes = nodes
+
     self.depth = depth
+    self.soFarCost = cost
+    self.ticketsLeft = tickets
 
-    selfXY = auxheur[number - 1]
-    goalXY = auxheur[goal - 1]
+    self.heuristic = 0
+    for x in range(len(nodes)):
+      if self.nodes[x].heur[x] > self.heuristic:
+        self.heuristic = self.nodes[x].heur[x]
 
-    self.cost = cost
-    self.heuristic = math.hypot(goalXY[0] - selfXY[0], goalXY[1] - selfXY[1]) + cost
-    self.antecessor = antecessor
-    self.sucessors = []
-    self.tickets = tickets
+    self.orderFactor = self.soFarCost + self.heuristic
+    self.pathTo = []
   
+  def __repr__(self):
+    return str(self.nodes) + " " + str(self.depth)
+  def __str__(self):
+    return str(self.nodes) + " " + str(self.depth)
   def __lt__(self, other):
-    return self.heuristic < other.heuristic
+    return self.orderFactor < other.orderFactor
 
 class Tree:
-  def __init__(self, expansions, depth, goal, auxheur):
+  # Class used to build a BFS tree i order to give correct heurisitcs to the various nodes!
+  def __init__(self):
+    self.nodes = {}
     self.toExpand = []
-    self.expansions = expansions
-    self.maxDepth = depth
-    self.goal = goal
-    self.auxheur = auxheur
+    pass
 
-    self.possiblePaths = []
+  # Expands the last node on Array toExpand
+  def expandNode(self, model, goalIndex):
+    nodeToExpand = self.toExpand.pop(0)
+    possiblities = model[nodeToExpand.pos]
 
-  def expandNext(self, model):
-    if (self.expansions == 0):
-      print("Expansion Limit Reached!")
-      return -1
+    for possiblity in possiblities:
+      if possiblity[1] not in self.nodes:
+        newHeur = nodeToExpand.heur.copy()
+        newNode = Node(possiblity[1], newHeur)
+        self.nodes[possiblity[1]] = newNode
 
-    node = self.toExpand.pop(0)
-    nodeDepth = node.depth
-    possibilities = model[node.number]
-
-    for possibility in possibilities:
-      if node.tickets[possibility[0]] > 0:
-        newNode = Node(possibility[1],possibility[0], node.heuristic ,nodeDepth + 1, self.goal, node, self.auxheur, node.tickets.copy())
+        newNode.heur[goalIndex] += 1
         self.toExpand.append(newNode)
-        node.sucessors.append(newNode)
-
-        newNode.tickets[possibility[0]] -= 1
-        self.expansions -= 1
-
-        if (possibility[1] == self.goal):
-          self.possiblePaths.append(newNode)
-    
-    self.toExpand.sort()
-    return self.possiblePaths
-
-def testPath(result):
-  depths = []
-
-  for detective in result:
-    tempSet = set()
-    for possibility in detective:
-      tempSet.add(possibility.depth)
-    
-    depths.append(tempSet)
-  
-  intersectionSet = depths[0]
-  for x in range(len(depths) - 1):
-    ##print(intersectionSet)
-    intersectionSet = intersectionSet.intersection(depths[x + 1])
-
-  nodes = []
-  if len(intersectionSet) != 0:
-    commonDepth = intersectionSet.pop()
-    for detective in result:
-      i = 0
-      while detective[i].depth != commonDepth:
-        i += 1
       
-      nodes.append(detective[i])
+      else:
+        newNode = self.nodes.get(possiblity[1])
+      
+        if (newNode.counterTemp != goalIndex):
+          newNode.heur[goalIndex] = nodeToExpand.heur[goalIndex] + 1
+          newNode.counterTemp += 1
+          self.toExpand.append(newNode)
 
-  return nodes
+  # Expands Tree till every node has an heuristic
+  def expandTillEnd(self, model, goalIndex):
+    while (len(self.toExpand) != 0):
+      self.expandNode(model, goalIndex)
+
+
+class Node:
+
+  def __init__(self, pos, heur):
+    self.pos = pos
+    self.heur = heur
+    self.counterTemp = 0
   
-def getPath(nodes):
-    result = []
-
-    while (nodes[0].antecessor != None):
-      transports = []
-      numbers = []
-      newNodes = []
-
-      for node in nodes:
-        transports.append(node.transport)
-        numbers.append(node.number)
-        newNodes.append(node.antecessor)
-
-      result = [[transports, numbers]] + result
-      nodes = newNodes
-
-    numbers = []
-    for node in nodes:
-      numbers.append(node.number)
-
-    result = [[[], numbers]] + result
-    return result
+  def __repr__(self):
+    return str(self.pos)
+  def __str__(self):
+    return str(self.pos)
 
 class SearchProblem:
 
   def __init__(self, goal, model, auxheur = []):
 
-    self.goal = goal
+    self.goals = goal
     self.model = model
     self.auxheur = auxheur
 
+    self.treeBFS = Tree()
+
+    heur = []
+    for x in range(0, len(self.goals)):
+      heur.append(0)
+
+    counter = 0
+    for goal in self.goals:
+      if (goal not in self.treeBFS.nodes):
+        newNode = Node(goal, heur.copy())
+        self.treeBFS.nodes[goal] = newNode
+      else:
+        newNode = self.treeBFS.nodes.get(goal)
+        newNode.counterTemp = counter
+
+      self.treeBFS.toExpand.append(newNode)
+      self.treeBFS.expandTillEnd(self.model, counter)
+      #print(str(self.treeBFS.nodes))
+
+      counter += 1
+
+    self.detective = None
+    
     pass
 
-  def search(self, init, limitexp = 2000, limitdepth = 10, tickets = [math.inf,math.inf,math.inf]):
-    ## print("Modelo: " + str(self.model))
-    ## print("Tamanho: " + str(len(self.model)))
-    ## print("Auxheur: " + str(self.auxheur))
-    ## print("Tamanho: " + str(len(self.auxheur)))
-
-    forest = []
-
-    for i in range(len(init)):
-      expansionTree = Tree(limitexp, limitdepth, self.goal[i], self.auxheur)
-      initialNode = Node(init[i], None, 0, 0, self.goal[i], None, self.auxheur, tickets)
-      expansionTree.toExpand.append(initialNode)
-      forest.append(expansionTree)
-
-    gotIt = False
-    while not gotIt:
-      gotIt = True
-      result = []
-
-      for tree in forest:
-        result.append(tree.expandNext(self.model))
-        gotIt = gotIt and len(result[-1]) != 0
-
-      if gotIt:
-        nodes = testPath(result)
-        gotIt = len(nodes) != 0
+  def search(self, init, limitexp = 2000, limitdepth = 10, tickets = [math.inf,math.inf,math.inf], anyorder = False):
     
-    result = getPath(nodes)
-    return result
+    nodesInit = []
+    for initPos in init:
+      initNode = self.treeBFS.nodes[initPos]
+      nodesInit.append(initNode)
+
+    initState = State(nodesInit, 0, 0, tickets)
+    initState.pathTo = [[[None], init]]
+    # print(initState)
+
+    self.detective = Detective(initState)
+    while not self.detective.checkSolved(self.goals):
+      self.detective.expandState(self.treeBFS.nodes, self.model)
+    
+    solution = self.detective.toExpand[0]
+    #print(str(solution.pathTo))
+    return solution.pathTo
     
