@@ -85,8 +85,8 @@ class Detective:
     if anyorder:
       goals.sort()
       possibleSolutionsPos.sort()
-      print("Goal x: " + str(goals))
-      print("Actual x: " + str(possibleSolutionsPos))
+      # print("Goal x: " + str(goals))
+      # print("Actual x: " + str(possibleSolutionsPos))
       if goals != possibleSolutionsPos:
         return False
 
