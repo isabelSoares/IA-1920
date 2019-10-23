@@ -45,7 +45,9 @@ class Detective:
       
       if len(tmpNodes) == len(stateToExpand.nodes):
         validTickets = True
+        sumTickets = 0
         for ticket in tmpTickets:
+          sumTickets += ticket
           if ticket < 0:
             validTickets = False
         
@@ -56,9 +58,10 @@ class Detective:
           if self.checkSolved(goal, anyorder, tmpState):
             return
 
-          self.states = [tmpState] + self.states
-          self.toExpand = [tmpState] + self.toExpand
-
+          if sumTickets >= len(tmpState.nodes):
+            self.states = [tmpState] + self.states
+            self.toExpand = [tmpState] + self.toExpand
+    
     self.toExpand.sort()
     while len(self.toExpand) > maxExpansion:
       self.toExpand.pop()
