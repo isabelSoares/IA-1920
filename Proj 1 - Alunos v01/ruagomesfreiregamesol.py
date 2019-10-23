@@ -126,13 +126,13 @@ class State:
       
       self.heuristic = math.inf
       for possibility in tmp:
-        max = 0
+        actualMax = 0
         for x in range(0, numberDetectives):
-          if possibility[x] > max:
-            max = possibility[x]
+          if possibility[x] > actualMax:
+            actualMax = possibility[x]
         
-        if max < self.heuristic:
-          self.heuristic = max
+        if actualMax < self.heuristic:
+          self.heuristic = actualMax
 
 
     self.orderFactor = self.soFarCost + self.heuristic
