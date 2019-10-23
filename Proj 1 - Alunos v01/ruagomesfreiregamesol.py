@@ -8,10 +8,15 @@ class Detective:
     self.states = [init]
     self.toExpand = [init]
     self.stateGoal = None
+    self.expansions = 0
+    self.solved = False
 
-  def expandState(self, nodesBFS, model):
+  def expandState(self, nodesBFS, model, maxDepth, maxExpansion):
     stateToExpand = self.toExpand.pop(0)
+    if stateToExpand.depth >= maxDepth or self.expansions >= maxExpansion:
+      return
 
+    self.expansions += 1
     tmp = [[]]
     for x in range(0, len(stateToExpand.nodes)):
       subtmp = []
@@ -62,17 +67,24 @@ class Detective:
     # print(self.toExpand)
 
   def checkSolved(self, goals):
-    valid = True
+    stop = True
+
+    if len(self.toExpand) == 0:
+      return True
+
     possibleSolution = self.toExpand[0]
     for x in range(0, len(goals)):
       #print("Goal x: " + str(goals[x]))
       #print("Actual x: " + str(possibleSolution.nodes[x].pos))
       #print("Actual Cost: " + str(possibleSolution.orderFactor))
       if goals[x] != possibleSolution.nodes[x].pos:
-        valid = False
+        stop = False
 
-    #print(str(valid))
-    return valid
+    #print(str(stop))
+    if stop:
+      self.solved = True
+
+    return stop
 
 class State:
 
@@ -191,9 +203,14 @@ class SearchProblem:
 
     self.detective = Detective(initState)
     while not self.detective.checkSolved(self.goals):
-      self.detective.expandState(self.treeBFS.nodes, self.model)
+      self.detective.expandState(self.treeBFS.nodes, self.model, limitdepth, limitexp)
     
+    if not self.detective.solved:
+      print("No valid path found!")
+      return None
+
     solution = self.detective.toExpand[0]
+    print("Expansions: " + str(self.detective.expansions))
     #print(str(solution.pathTo))
     return solution.pathTo
     
