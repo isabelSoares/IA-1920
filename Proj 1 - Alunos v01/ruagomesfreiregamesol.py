@@ -60,8 +60,8 @@ class Detective:
         if validTickets:
           tmpState = State(tmpNodes, stateToExpand.depth + 1, stateToExpand.soFarCost + 1, tmpTickets)
           tmpState.pathTo = tmpPath.copy()
-          self.states.append(tmpState)
-          self.toExpand.append(tmpState)
+          self.states = [tmpState] + self.states
+          self.toExpand = [tmpState] + self.toExpand
 
     self.toExpand.sort()
     # print(self.toExpand)
