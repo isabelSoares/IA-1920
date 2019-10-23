@@ -1,6 +1,7 @@
 import math
 import pickle
 import time
+import itertools
 
 class Detective:
 
@@ -13,28 +14,20 @@ class Detective:
 
   def expandState(self, nodesBFS, model, maxDepth, maxExpansion, anyorder):
     stateToExpand = self.toExpand.pop(0)
+    # print("State Expanded: " + str(stateToExpand))
     if stateToExpand.depth >= maxDepth or self.expansions >= maxExpansion:
       return
 
     self.expansions += 1
-    tmp = [[]]
-    for x in range(0, len(stateToExpand.nodes)):
-      subtmp = []
-      possibilities = model[stateToExpand.nodes[x].pos]
-      # print("Possibilities: " + str(possibilities))
-      for tmpValue in tmp:
-        for possibility in possibilities:
-          # print("tmpValue: " + str(tmpValue))
-          # print("possibilty: " + str(possibility))
-          newValue = tmpValue + ([possibility])
-          # print("newValue: " + str(newValue))
-          subtmp.append(newValue)
-      
-      tmp = subtmp.copy()
+    tmp = []
+    for node in stateToExpand.nodes:
+      tmp.append(model[node.pos])
+    
+    possibilitiesStates = list(itertools.product(*tmp))
 
-    # print(str(tmp))
+    # if stateToExpand.depth == 0:
+      # print(str(possibilitiesStates))
 
-    possibilitiesStates = tmp
     for possibility in possibilitiesStates:
       tmpNodes = []
       tmpTickets = stateToExpand.ticketsLeft.copy()
@@ -64,6 +57,8 @@ class Detective:
           self.toExpand = [tmpState] + self.toExpand
 
     self.toExpand.sort()
+    while len(self.toExpand) > maxExpansion:
+      self.toExpand.pop()
     # print(self.toExpand)
 
   def checkSolved(self, goals, anyorder):
@@ -110,26 +105,19 @@ class State:
           self.heuristic = self.nodes[x].heur[x]
     
     else:
-      tmp = [[]]
-      for x in range(0, numberDetectives):
-        subtmp = []
-        possibilities = self.nodes[x].heur
-        # print("Possibilities: " + str(possibilities))
-        for tmpValue in tmp:
-          for possibility in possibilities:
-            # print("tmpValue: " + str(tmpValue))
-            # print("possibilty: " + str(possibility))
-            newValue = tmpValue + ([possibility])
-            # print("newValue: " + str(newValue))
-            subtmp.append(newValue)
-        tmp = subtmp.copy()
+      tmp = []
+      for index in range(0, numberDetectives):
+        tmp.append(index)
       
       self.heuristic = math.inf
-      for possibility in tmp:
+      indexPossibilities = itertools.permutations(tmp)
+      for possibility in indexPossibilities:
         actualMax = 0
-        for x in range(0, numberDetectives):
-          if possibility[x] > actualMax:
-            actualMax = possibility[x]
+        count = 0
+        for index in possibility:
+          if self.nodes[count].heur[index] > actualMax:
+            actualMax = self.nodes[count].heur[index]
+          count += 1
         
         if actualMax < self.heuristic:
           self.heuristic = actualMax
@@ -139,9 +127,9 @@ class State:
     self.pathTo = []
   
   def __repr__(self):
-    return str(self.nodes) + " " + str(self.depth)
+    return str(self.nodes) + " : " + str(self.depth) + " : " + str(self.orderFactor)
   def __str__(self):
-    return str(self.nodes) + " " + str(self.depth)
+    return str(self.nodes) + " : " + str(self.depth) + " : " + str(self.orderFactor)
   def __lt__(self, other):
     return self.orderFactor < other.orderFactor
 
@@ -245,7 +233,7 @@ class SearchProblem:
       return None
 
     solution = self.detective.toExpand[0]
-    # print("Expansions: " + str(self.detective.expansions))
+    print("Expansions: " + str(self.detective.expansions))
     # print(str(solution.pathTo))
     return solution.pathTo
     
