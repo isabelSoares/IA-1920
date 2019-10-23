@@ -125,11 +125,11 @@ class State:
         tmp = subtmp.copy()
       
       self.heuristic = math.inf
-      for possibilitie in tmp:
+      for possibility in tmp:
         max = 0
         for x in range(0, numberDetectives):
-          if possibilitie[x] > max:
-            max = possibilitie[x]
+          if possibility[x] > max:
+            max = possibility[x]
         
         if max < self.heuristic:
           self.heuristic = max
