@@ -11,7 +11,7 @@ class Detective:
     self.expansions = 0
     self.solved = False
 
-  def expandState(self, nodesBFS, model, maxDepth, maxExpansion):
+  def expandState(self, nodesBFS, model, maxDepth, maxExpansion, anyorder):
     stateToExpand = self.toExpand.pop(0)
     if stateToExpand.depth >= maxDepth or self.expansions >= maxExpansion:
       return
@@ -58,7 +58,7 @@ class Detective:
         
         # print(str(tmpPath))
         if validTickets:
-          tmpState = State(tmpNodes, stateToExpand.depth + 1, stateToExpand.soFarCost + 1, tmpTickets)
+          tmpState = State(tmpNodes, stateToExpand.depth + 1, stateToExpand.soFarCost + 1, tmpTickets, anyorder)
           tmpState.pathTo = tmpPath.copy()
           self.states = [tmpState] + self.states
           self.toExpand = [tmpState] + self.toExpand
@@ -66,39 +66,74 @@ class Detective:
     self.toExpand.sort()
     # print(self.toExpand)
 
-  def checkSolved(self, goals):
+  def checkSolved(self, goals, anyorder):
     stop = True
 
     if len(self.toExpand) == 0:
       return True
 
     possibleSolution = self.toExpand[0]
+    possibleSolutionsPos = []
     for x in range(0, len(goals)):
       # print("Goal x: " + str(goals[x]))
       # print("Actual x: " + str(possibleSolution.nodes[x].pos))
       # print("Actual Cost: " + str(possibleSolution.orderFactor))
-      if goals[x] != possibleSolution.nodes[x].pos:
-        stop = False
+      possibleSolutionsPos.append(possibleSolution.nodes[x].pos)
+      if (not anyorder) and (goals[x] != possibleSolution.nodes[x].pos):
+        return False
 
-    # print(str(stop))
-    if stop:
-      self.solved = True
+    if anyorder:
+      goals.sort()
+      possibleSolutionsPos.sort()
+      print("Goal x: " + str(goals))
+      print("Actual x: " + str(possibleSolutionsPos))
+      if goals != possibleSolutionsPos:
+        return False
 
-    return stop
+    self.solved = True
+    return True
 
 class State:
 
-  def __init__(self, nodes, depth, cost, tickets):
+  def __init__(self, nodes, depth, cost, tickets, anyorder):
     self.nodes = nodes
+    numberDetectives = len(nodes)
 
     self.depth = depth
     self.soFarCost = cost
     self.ticketsLeft = tickets
 
     self.heuristic = 0
-    for x in range(len(nodes)):
-      if self.nodes[x].heur[x] > self.heuristic:
-        self.heuristic = self.nodes[x].heur[x]
+    if not anyorder:
+      for x in range(0, numberDetectives):
+        if self.nodes[x].heur[x] > self.heuristic:
+          self.heuristic = self.nodes[x].heur[x]
+    
+    else:
+      tmp = [[]]
+      for x in range(0, numberDetectives):
+        subtmp = []
+        possibilities = self.nodes[x].heur
+        # print("Possibilities: " + str(possibilities))
+        for tmpValue in tmp:
+          for possibility in possibilities:
+            # print("tmpValue: " + str(tmpValue))
+            # print("possibilty: " + str(possibility))
+            newValue = tmpValue + ([possibility])
+            # print("newValue: " + str(newValue))
+            subtmp.append(newValue)
+        tmp = subtmp.copy()
+      
+      self.heuristic = math.inf
+      for possibilitie in tmp:
+        max = 0
+        for x in range(0, numberDetectives):
+          if possibilitie[x] > max:
+            max = possibilitie[x]
+        
+        if max < self.heuristic:
+          self.heuristic = max
+
 
     self.orderFactor = self.soFarCost + self.heuristic
     self.pathTo = []
@@ -197,13 +232,13 @@ class SearchProblem:
       initNode = self.treeBFS.nodes[initPos]
       nodesInit.append(initNode)
 
-    initState = State(nodesInit, 0, 0, tickets)
+    initState = State(nodesInit, 0, 0, tickets, anyorder)
     initState.pathTo = [[[None], init]]
     # print(initState)
 
     self.detective = Detective(initState)
-    while not self.detective.checkSolved(self.goals):
-      self.detective.expandState(self.treeBFS.nodes, self.model, limitdepth, limitexp)
+    while not self.detective.checkSolved(self.goals, anyorder):
+      self.detective.expandState(self.treeBFS.nodes, self.model, limitdepth, limitexp, anyorder)
     
     if not self.detective.solved:
       print("No valid path found!")
