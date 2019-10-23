@@ -21,18 +21,18 @@ class Detective:
     for x in range(0, len(stateToExpand.nodes)):
       subtmp = []
       possibilities = model[stateToExpand.nodes[x].pos]
-      #print("Possibilities: " + str(possibilities))
+      # print("Possibilities: " + str(possibilities))
       for tmpValue in tmp:
         for possibility in possibilities:
-          #print("tmpValue: " + str(tmpValue))
-          #print("possibilty: " + str(possibility))
+          # print("tmpValue: " + str(tmpValue))
+          # print("possibilty: " + str(possibility))
           newValue = tmpValue + ([possibility])
-          #print("newValue: " + str(newValue))
+          # print("newValue: " + str(newValue))
           subtmp.append(newValue)
       
       tmp = subtmp.copy()
 
-    #print(str(tmp))
+    # print(str(tmp))
 
     possibilitiesStates = tmp
     for possibility in possibilitiesStates:
@@ -74,13 +74,13 @@ class Detective:
 
     possibleSolution = self.toExpand[0]
     for x in range(0, len(goals)):
-      #print("Goal x: " + str(goals[x]))
-      #print("Actual x: " + str(possibleSolution.nodes[x].pos))
-      #print("Actual Cost: " + str(possibleSolution.orderFactor))
+      # print("Goal x: " + str(goals[x]))
+      # print("Actual x: " + str(possibleSolution.nodes[x].pos))
+      # print("Actual Cost: " + str(possibleSolution.orderFactor))
       if goals[x] != possibleSolution.nodes[x].pos:
         stop = False
 
-    #print(str(stop))
+    # print(str(stop))
     if stop:
       self.solved = True
 
@@ -182,7 +182,7 @@ class SearchProblem:
 
       self.treeBFS.toExpand.append(newNode)
       self.treeBFS.expandTillEnd(self.model, counter)
-      #print(str(self.treeBFS.nodes))
+      # print(str(self.treeBFS.nodes))
 
       counter += 1
 
@@ -210,7 +210,7 @@ class SearchProblem:
       return None
 
     solution = self.detective.toExpand[0]
-    print("Expansions: " + str(self.detective.expansions))
-    #print(str(solution.pathTo))
+    # print("Expansions: " + str(self.detective.expansions))
+    # print(str(solution.pathTo))
     return solution.pathTo
     
