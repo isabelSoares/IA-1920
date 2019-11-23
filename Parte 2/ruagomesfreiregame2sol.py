@@ -39,6 +39,9 @@ class LearningAgent:
                         if (self.Q[st][i] > maxValue and random.random() < self.tradeTrue) or (self.Q[st][i] <= maxValue and random.random() < self.tradeFalse):
                                 maxValue = self.Q[st][i]
                                 a = i
+
+                for i in range(len(aa), self.nA):
+                        self.Q[st][i] = None
                 
                 #print("Next Index: " + str(a))
                 return a
@@ -55,7 +58,7 @@ class LearningAgent:
                 a = 0
                 maxValue = self.Q[st][0]
                 for i in range(len(aa)):
-                        if self.Q[st][i] > maxValue:
+                        if self.Q[st][i] != None and self.Q[st][i] > maxValue:
                                 maxValue = self.Q[st][i]
                                 a = i
                 
@@ -74,7 +77,7 @@ class LearningAgent:
                 maxIndex = 0
                 maxNext = self.Q[nst][0]
                 for i in range(len(self.Q[nst])):
-                        if self.Q[nst][i] > maxNext:
+                        if self.Q[nst][i] != None and self.Q[nst][i] > maxNext:
                                 maxNext = self.Q[nst][i]
                                 maxIndex = i
 
