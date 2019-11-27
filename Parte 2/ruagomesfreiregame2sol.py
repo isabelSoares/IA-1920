@@ -13,17 +13,31 @@ class LearningAgent:
                 self.nS = nS
                 self.nA = nA
                 
-                self.alpha = 0.2
+                self.alpha = 0.5
                 self.gamma = 0.9275
 
-                self.tradeTrue = 0.95
-                self.tradeFalse = 0.05
+                self.exploitation = 0.80
+                self.explore = 1 - self.exploitation
 
                 self.Q = [ [ 0 for i in range(nA) ] for j in range(nS) ]
 
                 #print(str(self.Q))
               
-        
+
+        def selectBestIndex(self, st, aa):
+                maxValue = self.Q[st][0]
+                maxIndexes = [0]
+                for i in range(len(aa)):
+                        if (self.Q[st][i] > maxValue):
+                                maxIndexes = []
+                                maxIndexes.append(i)
+                                maxValue = self.Q[st][i]
+                        elif (self.Q[st][i] == maxValue):
+                                maxIndexes.append(i)
+                
+                return maxIndexes[random.randint(0, len(maxIndexes) - 1)]
+
+
         # Select one action, used when learning  
         # st - is the current state        
         # aa - is the set of possible actions
@@ -33,18 +47,14 @@ class LearningAgent:
         def selectactiontolearn(self,st,aa):
                 # print("select one action to learn better")
 
-                a = 0
-                maxValue = self.Q[st][0]
-                for i in range(len(aa)):
-                        if (self.Q[st][i] > maxValue and random.random() < self.tradeTrue) or (self.Q[st][i] <= maxValue and random.random() < self.tradeFalse):
-                                maxValue = self.Q[st][i]
-                                a = i
-
                 for i in range(len(aa), self.nA):
                         self.Q[st][i] = None
-                
-                #print("Next Index: " + str(a))
-                return a
+
+                randomValue = random.random()
+                if (randomValue <= self.explore):
+                        return random.randint(0, len(aa) - 1)
+                else:
+                        return self.selectBestIndex(st, aa)
 
         # Select one action, used when evaluating
         # st - is the current state        
@@ -55,15 +65,7 @@ class LearningAgent:
         def selectactiontoexecute(self,st,aa):
                 # print("select one action to see if I learned")
                 
-                a = 0
-                maxValue = self.Q[st][0]
-                for i in range(len(aa)):
-                        if self.Q[st][i] != None and self.Q[st][i] > maxValue:
-                                maxValue = self.Q[st][i]
-                                a = i
-                
-                #print("Next Index: " + str(a))
-                return a
+                return self.selectBestIndex(st, aa)
 
 
         # this function is called after every action
