@@ -1,3 +1,4 @@
+# Isabel Soares (189466) & Rodrigo Sousa (189535) - Grupo 27
 import random
 
 # LearningAgent to implement
@@ -21,9 +22,6 @@ class LearningAgent:
 
                 self.Q = [ [ 0 for i in range(nA) ] for j in range(nS) ]
 
-                #print(str(self.Q))
-              
-
         def selectBestIndex(self, st, aa):
                 maxValue = self.Q[st][0]
                 maxIndexes = [0]
@@ -45,8 +43,6 @@ class LearningAgent:
         # returns
         # a - the index to the action in aa
         def selectactiontolearn(self,st,aa):
-                # print("select one action to learn better")
-
                 for i in range(len(aa), self.nA):
                         self.Q[st][i] = None
 
@@ -62,9 +58,7 @@ class LearningAgent:
         # for a given state they are always given in the same order
         # returns
         # a - the index to the action in aa
-        def selectactiontoexecute(self,st,aa):
-                # print("select one action to see if I learned")
-                
+        def selectactiontoexecute(self,st,aa):                
                 return self.selectBestIndex(st, aa)
 
 
@@ -74,18 +68,13 @@ class LearningAgent:
         # a - the index to the action taken
         # r - reward obtained
         def learn(self,st,nst,a,r):
-                #print("learn something from this data")
-
                 maxIndex = 0
                 maxNext = self.Q[nst][0]
                 for i in range(len(self.Q[nst])):
                         if self.Q[nst][i] != None and self.Q[nst][i] > maxNext:
                                 maxNext = self.Q[nst][i]
                                 maxIndex = i
-
-                #print("Old Value: " + str(self.Q[st][a]))
-                #print("Parameters: r:" + str(r))
+        
                 self.Q[st][a] = self.Q[st][a] + self.alpha * (r +  self.gamma * maxNext - self.Q[st][a])
-                #print("New Value: " + str(self.Q[st][a]))
                 
                 return
